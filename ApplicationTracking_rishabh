@@ -40,7 +40,12 @@ Step-3 Set Up a Virtual Environment
  python3 -m venv venv
  source venv/bin/activate
 
+Step-4 Install Project Dependencies
+ pip install --upgrade pip
+ pip install -r requirements.txt
+ pip install google-generativeai
 ----------------
+This is the 2nd Part
 
 AWS + GCP + AI ATS System  
 Part 4 AI Gemini Setup 
@@ -61,8 +66,3 @@ GOOGLE_API_KEY = "your-api-key-here"
 
 
 
-
-Step-4 Install Project Dependencies
- pip install --upgrade pip
- pip install -r requirements.txt
- pip install google-generativeai
