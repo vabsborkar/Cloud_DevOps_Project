@@ -1,0 +1,54 @@
+name: AI DevOps Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Get PR diff
+      run: |
+        git fetch origin ${{ github.base_ref }}
+        git diff origin/${{ github.base_ref }} > diff.txt
+
+    - name: Install jq
+      run: sudo apt-get install jq -y
+
+    - name: Send diff to GCP VM
+      run: |
+        curl -X POST http://YOUR_VM_IP:5000/review \
+        -H "Content-Type: application/json" \
+        -d "{\"diff\": \"$(cat diff.txt | sed 's/\"/\\\"/g')\"}" \
+        > result.json
+
+    - name: Extract review
+      run: |
+        cat result.json | jq -r '.review' > review.txt
+        cat result.json | jq -r '.status' > status.txt
+
+    - name: Post PR comment
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const review = fs.readFileSync('review.txt', 'utf8');
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: review
+          });
+
+    - name: Fail if critical issues found
+      run: |
+        if grep -q "fail" status.txt; then
+          echo "Critical issues found. Failing pipeline."
+          exit 1
+        fi
